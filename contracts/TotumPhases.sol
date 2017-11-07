@@ -358,6 +358,8 @@ contract TotumPhases is Ownable {
         if (currentPhase == 1) {
             return getICOBonusAmount(_amount, _time);
         }
+
+        return uint256(0);
     }
 
     function getICOBonusAmount(uint256 _amount, uint256 _time) internal returns (uint256) {
