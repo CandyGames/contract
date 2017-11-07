@@ -1,3 +1,4 @@
+/* solhint-disable */
 // <ORACLIZE_API>
 /*
 Copyright (c) 2015-2016 Oraclize SRL
