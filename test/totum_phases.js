@@ -648,4 +648,62 @@ contract('TotumPhases', function (accounts) {
 
     });
 
+    it("create contract & check buy after hardCap", async function () {
+        let phases = await totumPhases.new(
+            token.address,
+            new BigNumber(10).mul(precision),
+            new BigNumber(3300000000000000),
+            new BigNumber(500),
+            now - 3600 * 24 * 63,
+            now - 3600 * 24 * 62,
+            new BigNumber(1000),
+            new BigNumber(40000),
+            now - (3600 * 24 * 30) - (3600 * 23),
+            now + 3600
+        )
+
+        await token.addMinter(phases.address);
+
+        await phases.setTotumAllocation(allocation.address)
+
+        await phases.sendTransaction({value: "1000000000000000000"})
+            .then(() => Utils.receiptShouldSucceed)
+            .then(() => Utils.balanceShouldEqualTo(token, accounts[0], new BigNumber("33333").valueOf()))
+
+        //1000000000000000000 * 100 / 3300000000000000 * 110/100 = 33333.3333333333333333
+        let soldTokens = await phases.getTokens()
+        assert.equal(soldTokens.valueOf(), "33333", 'soldTokens is not equal')
+
+        await phases.sendTransaction({value: "1000000000000000000"})
+            .then(Utils.receiptShouldFailed)
+            .catch(Utils.catchReceiptShouldFailed)
+            .then(() => Utils.balanceShouldEqualTo(token, accounts[0], new BigNumber("33333").valueOf()))
+
+    });
+
+    it("create contract & check getBonusAmount through sendWithTime", async function () {
+        let phases = await totumPhases.new(
+            token.address,
+            new BigNumber(10).mul(precision),
+            new BigNumber(3300000000000000),
+            new BigNumber(500),
+            now - 3600 * 24 * 63,
+            now - 3600 * 24 * 62,
+            new BigNumber(1000),
+            new BigNumber(40000),
+            now - (3600 * 24 * 30) - (3600 * 23),
+            now + 3600
+        )
+
+        await token.addMinter(phases.address);
+
+        await phases.setTotumAllocation(allocation.address)
+
+        await phases.sendToAddressWithTime(accounts[2], 1000, now + 3600 * 24 * 28)
+            .then(() => Utils.receiptShouldSucceed)
+            .then(() => Utils.balanceShouldEqualTo(token, accounts[2], new BigNumber("1000").valueOf()))
+
+
+    });
+
 });

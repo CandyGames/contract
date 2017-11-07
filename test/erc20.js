@@ -255,4 +255,63 @@ contract('ERC20', function(accounts) {
             .then(() => Utils.balanceShouldEqualTo(instance, instance.address, 0))
     });
 
+    it("transfer by transferFrom with lock == false", function() {
+        return ERC20.new(
+            1000000,
+            "TEST",
+            18,
+            "TEST",
+            true,
+            false
+        ).then(function(_instance) {
+            instance = _instance;
+        })
+            .then(() => Utils.balanceShouldEqualTo(instance, accounts[0], 1000000))
+            .then(() => Utils.balanceShouldEqualTo(instance, accounts[1], 0))
+            .then(() => Utils.balanceShouldEqualTo(instance, instance.address, 0))
+
+            .then(function() {
+                return instance.approve(accounts[1], 2000000);
+            })
+            .then(Utils.receiptShouldSucceed)
+
+            .then(function() {
+                return instance.allowance.call(accounts[0], accounts[1]);
+            })
+            .then(function(result) {
+                assert.equal(result.valueOf(), 2000000, "allowance is not equal");
+            })
+
+            .then(() => Utils.balanceShouldEqualTo(instance, accounts[0], 1000000))
+            .then(() => Utils.balanceShouldEqualTo(instance, accounts[1], 0))
+            .then(function() {
+                return instance.transferFrom(accounts[0], accounts[1], 500000, {from: accounts[1]});
+            })
+            .then(Utils.receiptShouldSucceed)
+            .then(() => Utils.balanceShouldEqualTo(instance, accounts[0], 500000))
+            .then(() => Utils.balanceShouldEqualTo(instance, accounts[1], 500000))
+    });
+
+    it("transfer by transferFrom with lock == true", function() {
+        return ERC20.new(
+            1000000,
+            "TEST",
+            18,
+            "TEST",
+            true,
+            true
+        ).then(function(_instance) {
+            instance = _instance;
+        })
+            .then(() => Utils.balanceShouldEqualTo(instance, accounts[0], 1000000))
+            .then(() => Utils.balanceShouldEqualTo(instance, accounts[1], 0))
+            .then(function() {
+                return instance.transferFrom(accounts[0], accounts[1], 500000, {from: accounts[1]});
+            })
+            .then(Utils.receiptShouldSucceed)
+
+            .then(() => Utils.balanceShouldEqualTo(instance, accounts[0], 1000000))
+            .then(() => Utils.balanceShouldEqualTo(instance, accounts[1], 0))
+    });
+
 });

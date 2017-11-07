@@ -4,10 +4,9 @@ import "./Ownable.sol";
 import "./Totum.sol";
 import "./TotumAllocation.sol";
 import "./SafeMath.sol";
-import "./OraclizeAPI.sol";
 
 
-contract TotumPhases is usingOraclize, Ownable {
+contract TotumPhases is Ownable {
 
     using SafeMath for uint256;
 
@@ -17,25 +16,17 @@ contract TotumPhases is usingOraclize, Ownable {
 
     Phase[] public phases;
 
-    uint256 public constant HOUR = 3600;
-
     uint256 public constant DAY = 86400;
 
     uint256 public collectedEthers;
 
     uint256 public soldTokens;
 
-    uint256 public priceUpdateAt;
-
     uint256 public investorsCount;
 
     mapping (address => uint256) public icoEtherBalances;
 
     mapping (address => bool) private investors;
-
-    event NewOraclizeQuery(string description);
-
-    event NewTotumPriceTicker(string price);
 
     event Refund(address holder, uint256 ethers, uint256 tokens);
 
@@ -69,11 +60,6 @@ contract TotumPhases is usingOraclize, Ownable {
 
         phases.push(Phase(_tokenPrice, _minInvest, 0, _preIcoMaxCap, _preIcoSince, _preIcoTill, false));
         phases.push(Phase(_tokenPrice, _minInvest, _icoMinCap, _icoMaxCap, _icoSince, _icoTill, false));
-
-        priceUpdateAt = now;
-
-        oraclize_setNetwork(networkID_auto);
-        oraclize = OraclizeI(OAR.getAddress());
     }
 
     function() public payable {
@@ -86,7 +72,6 @@ contract TotumPhases is usingOraclize, Ownable {
             Phase storage phase = phases[i];
             phase.price = _rate;
         }
-        priceUpdateAt = now;
     }
 
     function setTotum(address _totum) public onlyOwner {
@@ -223,21 +208,6 @@ contract TotumPhases is usingOraclize, Ownable {
         return collectedEthers;
     }
 
-    function __callback(bytes32, string _result, bytes) public {
-        require(msg.sender == oraclize_cbAddress());
-
-        uint256 price = uint256(10 ** 23).div(parseInt(_result, 5));
-
-        require(price > 0);
-
-        for (uint i = 0; i < phases.length; i++) {
-            Phase storage phase = phases[i];
-            phase.price = price;
-        }
-
-        NewTotumPriceTicker(_result);
-    }
-
     function isSucceed(uint8 _phaseId) public returns (bool) {
         if (phases.length <= _phaseId) {
             return false;
@@ -289,15 +259,6 @@ contract TotumPhases is usingOraclize, Ownable {
         return (phase.isSucceed || now > phase.till);
     }
 
-    function update() internal {
-        if (oraclize_getPrice("URL") > this.balance) {
-            NewOraclizeQuery("Oraclize query was NOT sent, please add some ETH to cover for the query fee");
-        } else {
-            NewOraclizeQuery("Oraclize query was sent, standing by for the answer..");
-            oraclize_query("URL", "json(https://api.kraken.com/0/public/Ticker?pair=ETHUSD).result.XETHZUSD.c.0");
-        }
-    }
-
     function buy(address _address, uint256 _value) internal returns (bool) {
         if (_value == 0) {
             return false;
@@ -307,11 +268,6 @@ contract TotumPhases is usingOraclize, Ownable {
 
         if (phases.length <= currentPhase) {
             return false;
-        }
-
-        if (priceUpdateAt.add(HOUR.mul(6)) < now) {
-            update();
-            priceUpdateAt = now;
         }
 
         uint256 amount = getTokensAmount(_value, currentPhase);
@@ -402,8 +358,6 @@ contract TotumPhases is usingOraclize, Ownable {
         if (currentPhase == 1) {
             return getICOBonusAmount(_amount, _time);
         }
-
-        return uint256(0);
     }
 
     function getICOBonusAmount(uint256 _amount, uint256 _time) internal returns (uint256) {
