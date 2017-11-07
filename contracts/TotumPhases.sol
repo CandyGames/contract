@@ -21,8 +21,6 @@ contract TotumPhases is usingOraclize, Ownable {
 
     uint256 public constant DAY = 86400;
 
-    uint256 public constant ETHWEI = 1000000000000000000;
-
     uint256 public collectedEthers;
 
     uint256 public soldTokens;
@@ -361,11 +359,11 @@ contract TotumPhases is usingOraclize, Ownable {
         if (_amount == 0) {
             return 0;
         }
-        if (_value < ETHWEI.mul(3)) {
+        if (_value < 3 ether) {
             return 0;
-        } else if (_value < ETHWEI.mul(15)) {
+        } else if (_value < 15 ether) {
             return _amount.mul(3).div(100);
-        } else if (_value < ETHWEI.mul(30)) {
+        } else if (_value < 30 ether) {
             return _amount.mul(5).div(100);
         } else {
             return _amount.mul(7).div(100);
