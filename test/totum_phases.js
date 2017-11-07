@@ -4,6 +4,7 @@
 
 var totum = artifacts.require("./Totum.sol");
 var totumPhases = artifacts.require("./TotumPhases.sol");
+var testTotumPhases = artifacts.require("./test/TestTotumPhases.sol");
 var totumAllocation = artifacts.require("./TotumAllocation.sol");
 
 var Utils = require("./utils"),
@@ -703,6 +704,49 @@ contract('TotumPhases', function (accounts) {
             .then(() => Utils.receiptShouldSucceed)
             .then(() => Utils.balanceShouldEqualTo(token, accounts[2], new BigNumber("1000").valueOf()))
 
+
+    });
+
+    it("test getVolumeBasedBonusAmount && getTokensAmount functions", async function () {
+        let testPhases = await testTotumPhases.new(
+            token.address,
+            new BigNumber(10).mul(precision),
+            new BigNumber(3300000000000000),
+            new BigNumber(500),
+            now - 3600 * 24 * 63,
+            now - 3600 * 24 * 62,
+            new BigNumber(1000),
+            new BigNumber(40000),
+            now - (3600 * 24 * 30) - (3600 * 23),
+            now + 3600
+        )
+
+        let check = await testPhases.soldTokens.call()
+        assert.equal(check.valueOf(), 0, 'check value is not equal')
+
+        check = await testPhases.checkGetVolumeBasedBonusAmount.call(1000000000000000000, 0)
+        assert.equal(check.valueOf(), 0, 'checkAmount value is not equal')
+
+        check = await testPhases.checkGetVolumeBasedBonusAmount.call(new BigNumber("2999999999999999999"), new BigNumber("100"))
+        assert.equal(check.valueOf(), 0, 'checkAmount value is not equal')
+
+        check = await testPhases.checkGetVolumeBasedBonusAmount.call(new BigNumber("14999999999999999999"), new BigNumber("100"))
+        assert.equal(check.valueOf(), 100 * 3 / 100, 'checkAmount value is not equal')
+
+        check = await testPhases.checkGetVolumeBasedBonusAmount.call(new BigNumber("29999999999999999999"), new BigNumber("100"))
+        assert.equal(check.valueOf(), 100 * 5 / 100, 'checkAmount value is not equal')
+
+        check = await testPhases.checkGetVolumeBasedBonusAmount.call(new BigNumber("30000000000000000000"), new BigNumber("100"))
+        assert.equal(check.valueOf(), 100 * 7 / 100, 'checkAmount value is not equal')
+
+        check = await testPhases.checkGetVolumeBasedBonusAmount.call(new BigNumber("228000000000000000000"), new BigNumber("100"))
+        assert.equal(check.valueOf(), 100 * 7 / 100, 'checkAmount value is not equal')
+
+        check = await testPhases.checkGetTokensAmount.call(new BigNumber("0"), new BigNumber("0"))
+        assert.equal(check.valueOf(), new BigNumber("0"), 'checkAmount value is not equal')
+
+        check = await testPhases.checkGetTokensAmount.call(new BigNumber("28"), new BigNumber("2"))
+        assert.equal(check.valueOf(), new BigNumber("0"), 'checkAmount value is not equal')
 
     });
 
