@@ -583,4 +583,69 @@ contract('TotumPhases', function (accounts) {
 
 
     });
+
+    it("create contract & check Time-based bonus", async function () {
+        let phases = await totumPhases.new(
+            token.address,
+            new BigNumber(10).mul(precision),
+            new BigNumber(3300000000000000),
+            new BigNumber(500000).mul(precision),
+            now - 3600 * 24 * 63,
+            now - 3600 * 24 * 62,
+            new BigNumber(50000),
+            new BigNumber(13200000).mul(precision),
+            now - (3600 * 24 * 30) - (3600 * 23),
+            now + 3600
+        )
+
+        await token.addMinter(phases.address);
+
+        await phases.setTotumAllocation(allocation.address)
+
+        await phases.sendTransaction({value: "1000000000000000000"})
+            .then(() => Utils.receiptShouldSucceed)
+            .then(() => Utils.balanceShouldEqualTo(token, accounts[0], new BigNumber("33333").valueOf()))
+
+        //1000000000000000000 * 100 / 3300000000000000 * 110/100 = 33333.3333333333333333
+        let soldTokens = await phases.getTokens()
+        assert.equal(soldTokens.valueOf(), "33333", 'soldTokens is not equal')
+
+        await phases.setPhase(
+            1,
+            now - (3600 * 24 * 40) - (3600 * 23),
+            now + 3600,
+            new BigNumber(3300000000000000),
+            new BigNumber(50000),
+            new BigNumber(13200000).mul(precision),
+        )
+            .then(Utils.receiptShouldSucceed)
+
+        await phases.sendTransaction({value: "1000000000000000000"})
+            .then(() => Utils.receiptShouldSucceed)
+            .then(() => Utils.balanceShouldEqualTo(token, accounts[0], new BigNumber(31818 + 33333).valueOf()))
+
+        //1000000000000000000 * 100 / 3300000000000000 * 105/100 = 31818.1818181818181818
+        soldTokens = await phases.getTokens()
+        assert.equal(soldTokens.valueOf(), 31818 + 33333, 'soldTokens is not equal')
+
+        await phases.setPhase(
+            1,
+            now - 3600 * 24 * 41,
+            now + 3600,
+            new BigNumber(3300000000000000),
+            new BigNumber(50000),
+            new BigNumber(13200000).mul(precision),
+        )
+            .then(Utils.receiptShouldSucceed)
+
+        await phases.sendTransaction({value: "1000000000000000000"})
+            .then(() => Utils.receiptShouldSucceed)
+            .then(() => Utils.balanceShouldEqualTo(token, accounts[0], new BigNumber(31818 + 33333 + 30303).valueOf()))
+
+        //1000000000000000000 * 100 / 3300000000000000 = 30303.0303030303030303
+        soldTokens = await phases.getTokens()
+        assert.equal(soldTokens.valueOf(), 31818 + 33333 + 30303, 'soldTokens is not equal')
+
+    });
+
 });

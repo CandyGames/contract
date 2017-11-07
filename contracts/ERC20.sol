@@ -147,10 +147,6 @@ contract ERC20 is Ownable {
             return false;
         }
 
-        if (balances[_to].add(_value) <= balances[_to]) {
-            return false;
-        }
-
         setBalance(_from, balances[_from].sub(_value));
         setBalance(_to, balances[_to].add(_value));
 
