@@ -117,13 +117,12 @@ contract TotumPhases is Ownable {
             return false;
         }
 
-        bool status = (totalAmount != totum.mint(_address, totalAmount));
-        if (status) {
-            soldTokens = soldTokens.add(totalAmount);
-            increaseInvestorsCount(_address);
-        }
+        require(totalAmount == totum.mint(_address, totalAmount));
 
-        return status;
+        soldTokens = soldTokens.add(totalAmount);
+        increaseInvestorsCount(_address);
+
+        return true;
     }
 
     function sendToAddressWithTime(address _address, uint256 _tokens, uint256 _time) public onlyOwner returns (bool) {
@@ -137,14 +136,12 @@ contract TotumPhases is Ownable {
             return false;
         }
 
-        bool status = (totalAmount != totum.mint(_address, totalAmount));
+        require(totalAmount == totum.mint(_address, totalAmount));
 
-        if (status) {
-            soldTokens = soldTokens.add(totalAmount);
-            increaseInvestorsCount(_address);
-        }
+        soldTokens = soldTokens.add(totalAmount);
+        increaseInvestorsCount(_address);
 
-        return status;
+        return true;
     }
 
     function sendToAddressWithBonus(
@@ -162,14 +159,12 @@ contract TotumPhases is Ownable {
             return false;
         }
 
-        bool status = (totalAmount != totum.mint(_address, totalAmount));
+        require(totalAmount == totum.mint(_address, totalAmount));
 
-        if (status) {
-            soldTokens = soldTokens.add(totalAmount);
-            increaseInvestorsCount(_address);
-        }
+        soldTokens = soldTokens.add(totalAmount);
+        increaseInvestorsCount(_address);
 
-        return status;
+        return true;
     }
 
     function getCurrentPhase(uint256 _time) public constant returns (uint8) {
@@ -284,14 +279,12 @@ contract TotumPhases is Ownable {
 
         amount = amount.add(bonus);
 
-        bool status = (amount == totum.mint(_address, amount));
+        require(amount == totum.mint(_address, amount));
 
-        if (status) {
-            onSuccessfulBuy(_address, _value, amount, currentPhase);
-            allocate(currentPhase);
-        }
+        onSuccessfulBuy(_address, _value, amount, currentPhase);
+        allocate(currentPhase);
 
-        return status;
+        return true;
     }
 
     function onSuccessfulBuy(address _address, uint256 _value, uint256 _amount, uint8 _currentPhase) internal {
